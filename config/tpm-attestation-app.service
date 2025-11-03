@@ -1,0 +1,17 @@
+[Unit]
+Description=TPM Attestation Application
+After=network.target cloud-init.service
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/tpm-attestation-app
+ExecStart=/opt/tpm-attestation-app/start.sh
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
