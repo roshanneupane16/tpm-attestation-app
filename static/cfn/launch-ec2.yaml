@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Launch EC2 instance with current VPC and instance type configuration'
+
+Conditions:
+  HasUserData: !Not [!Equals [!Ref UserData, ""]]
+
+Parameters:
+  AMIId:
+    Type: String
+    Description: AMI ID to launch
+  InstanceType:
+    Type: String
+    Description: EC2 instance type
+    Default: t3.micro
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID where instance will be launched
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet ID where instance will be launched
+  CurrentInstancePrivateIP:
+    Type: String
+    Description: Private IP of the current instance for security group rule
+  InstanceName:
+    Type: String
+    Description: Name tag for the instance
+    Default: "LaunchedInstance"
+  InstanceProfileName:
+    Type: String
+    Description: IAM Instance Profile name
+    Default: "TPMAttestationProfile"
+  AssociatePublicIpAddress:
+    Type: String
+    Description: Associate a public IP address with the instance
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false"
+  UserData:
+    Type: String
+    Description: User data script (base64 encoded)
+    Default: ""
+
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group allowing port 80 from current instance only
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Sub "${CurrentInstancePrivateIP}/32"
+          Description: Allow HTTP from current instance
+      Tags:
+        - Key: Name
+          Value: !Sub "${InstanceName}-SG"
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AMIId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      IamInstanceProfile: !Ref InstanceProfileName
+      UserData: !If [HasUserData, !Ref UserData, !Ref "AWS::NoValue"]
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: !Ref AssociatePublicIpAddress
+          DeviceIndex: 0
+          GroupSet:
+            - !Ref SecurityGroup
+          SubnetId: !Ref SubnetId
+      Tags:
+        - Key: Name
+          Value: !Ref InstanceName
+        - Key: LaunchedBy
+          Value: CloudFormation
+
+Outputs:
+  InstanceId:
+    Description: Instance ID of the launched EC2 instance
+    Value: !Ref EC2Instance
+  PublicIP:
+    Description: Public IP address of the instance
+    Value: !GetAtt EC2Instance.PublicIp
+  PrivateIP:
+    Description: Private IP address of the instance
+    Value: !GetAtt EC2Instance.PrivateIp
