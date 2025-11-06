@@ -14,7 +14,7 @@ public_key="$(openssl rsa \
     | base64 --wrap 0)"
 
 # Request attestation document with public key
-attestation_doc="$(/aws-nitro-tpm-tools/nitro-tpm-attest \
+attestation_doc="$(nitro-tpm-attest \
     --public-key <(base64 --decode <<< "$public_key") \
     | base64 --wrap 0)"
 
