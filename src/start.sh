@@ -24,7 +24,8 @@ log "Found KMS Key ID: $KMS_KEY_ID"
 
 # Decrypt symmetric key using TPM attestation
 log "Decrypting symmetric key using TPM attestation..."
-SYMMETRIC_KEY=$(echo "$ENCRYPTED_KEY" | base64 -d | base64 -w 0 | "$APP_DIR/decrypt.sh" "$KMS_KEY_ID" -)
+# Base64 decode the encrypted key before passing to decrypt.sh
+SYMMETRIC_KEY=$(echo "$ENCRYPTED_KEY" | base64 -d | "$APP_DIR/decrypt.sh" "$KMS_KEY_ID" -)
 
 if [ -z "$SYMMETRIC_KEY" ]; then
     log "ERROR: Failed to decrypt symmetric key"
