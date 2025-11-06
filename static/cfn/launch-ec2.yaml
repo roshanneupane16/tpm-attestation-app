@@ -62,9 +62,6 @@ Resources:
     Properties:
       ImageId: !Ref AMIId
       InstanceType: !Ref InstanceType
-      SubnetId: !Ref SubnetId
-      SecurityGroupIds:
-        - !Ref SecurityGroup
       IamInstanceProfile: !Ref InstanceProfileName
       UserData: !If [HasUserData, !Ref UserData, !Ref "AWS::NoValue"]
       NetworkInterfaces:
